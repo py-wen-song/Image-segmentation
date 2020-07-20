@@ -1,0 +1,36 @@
+import cv2 as cv
+import numpy as np
+from math import *
+class WaterMark:
+    def Test(self,path):
+        img = cv.imread(path)
+        #旋转图片-30
+        imgRotation=self.xuanzhuan(img,-30)
+        # 切割水印部分
+        roi = imgRotation[620:655,490:710]
+        thresh = cv.inRange(roi, np.array([100, 80, 80]), np.array([230, 230, 230]))
+        # scan = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))
+        scan = np.ones((3, 3), np.uint8)
+        cor = cv.dilate(thresh, scan, iterations=2)
+        specular = cv.inpaint(roi, cor, 5, flags=cv.INPAINT_TELEA)
+        imgRotation[620:655,490:710] = specular
+        # 旋转图片30
+        imgRotation4=self.xuanzhuan(imgRotation,jiaodu=30)
+        cv.imwrite(str(path).replace('shui_img','img'),imgRotation4)
+    #去完水印图片的旋转
+    def xuanzhuan(self,img,jiaodu):
+        height, width = img.shape[:2]
+        degree = jiaodu
+        # 旋转后的尺寸
+        heightNew = int(width * fabs(sin(radians(degree))) + height * fabs(cos(radians(degree))))
+        widthNew = int(height * fabs(sin(radians(degree))) + width * fabs(cos(radians(degree))))
+        matRotation = cv.getRotationMatrix2D((width / 2, height / 2), degree, 1)
+        matRotation[0, 2] += (widthNew - width) / 2
+        matRotation[1, 2] += (heightNew - height) / 2
+        imgRotation = cv.warpAffine(img, matRotation, (widthNew, heightNew), borderValue=(255, 255, 255))
+        return imgRotation
+if __name__ ==  '__main__':
+    shui = WaterMark()
+    shui.Test('D:\\pycharm\\xiecheng\\shui_img\\428_2.jpg')
+
+
